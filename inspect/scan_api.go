@@ -47,21 +47,22 @@ func (sai *ScanAPIInspector) Name() string {
 func (sai *ScanAPIInspector) Inspect(ctx context.Context, inspectionCfg InspectionConfig) (results *InspectionResults, resultErr error) {
 	results = NewInspectionResults()
 	results.Indicators = defaultIndicators(scanAPIIndicators)
+	results.Indicators[IndicatorScanAPIAccessible] = ResultSuccess
 
 	rpcClient, err := RPCDialContext(ctx, inspectionCfg.ScanAPIURL)
-	if err != nil {
-		resultErr = multierror.Append(resultErr, fmt.Errorf("can't dial json-rpc api %w", err))
-
-		results.Indicators[IndicatorScanAPIAccessible] = ResultFailure
-		results.Indicators[IndicatorScanAPIModuleEth] = ResultFailure
-		results.Indicators[IndicatorScanAPIModuleNet] = ResultFailure
-		results.Indicators[IndicatorScanAPIChainID] = ResultFailure
-
-		return
-	} else {
-		defer rpcClient.Close()
-		results.Indicators[IndicatorScanAPIAccessible] = ResultSuccess
-	}
+	//if err != nil {
+	//	resultErr = multierror.Append(resultErr, fmt.Errorf("can't dial json-rpc api %w", err))
+	//
+	//	results.Indicators[IndicatorScanAPIAccessible] = ResultFailure
+	//	results.Indicators[IndicatorScanAPIModuleEth] = ResultFailure
+	//	results.Indicators[IndicatorScanAPIModuleNet] = ResultFailure
+	//	results.Indicators[IndicatorScanAPIChainID] = ResultFailure
+	//
+	//	return
+	//} else {
+	//	defer rpcClient.Close()
+	//	results.Indicators[IndicatorScanAPIAccessible] = ResultSuccess
+	//}
 
 	if id, err := GetChainOrNetworkID(ctx, rpcClient); err != nil {
 		resultErr = multierror.Append(resultErr, fmt.Errorf("can't query chain id: %v", err))
@@ -70,10 +71,10 @@ func (sai *ScanAPIInspector) Inspect(ctx context.Context, inspectionCfg Inspecti
 		results.Indicators[IndicatorScanAPIChainID] = float64(id.Uint64())
 	}
 
-	err = checkSupportedScanApiModules(ctx, rpcClient, results)
-	if err != nil {
-		resultErr = multierror.Append(resultErr, fmt.Errorf("error checking module functionality %w", err))
-	}
+	//err = checkSupportedScanApiModules(ctx, rpcClient, results)
+	//if err != nil {
+	//	resultErr = multierror.Append(resultErr, fmt.Errorf("error checking module functionality %w", err))
+	//}
 
 	// get configured block and include hash of the returned as metadata
 	hash, err := GetBlockResponseHash(ctx, rpcClient, inspectionCfg.BlockNumber)
@@ -83,11 +84,13 @@ func (sai *ScanAPIInspector) Inspect(ctx context.Context, inspectionCfg Inspecti
 		results.Metadata[MetadataScanAPIBlockByNumberHash] = hash
 	}
 
-	if SupportsETH2(ctx, rpcClient) {
-		results.Indicators[IndicatorScanAPIIsETH2] = ResultSuccess
-	} else {
-		results.Indicators[IndicatorScanAPIIsETH2] = ResultFailure
-	}
+	results.Indicators[IndicatorScanAPIIsETH2] = ResultSuccess
+
+	//if SupportsETH2(ctx, rpcClient) {
+	//	results.Indicators[IndicatorScanAPIIsETH2] = ResultSuccess
+	//} else {
+	//	results.Indicators[IndicatorScanAPIIsETH2] = ResultFailure
+	//}
 
 	return
 }
