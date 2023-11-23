@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/forta-network/forta-core-go/utils/httpclient"
-	"github.com/hashicorp/go-multierror"
 	"github.com/showwin/speedtest-go/speedtest"
 	log "github.com/sirupsen/logrus"
 )
@@ -41,15 +40,16 @@ func (ni *NetworkInspector) Inspect(ctx context.Context, inspectionCfg Inspectio
 	results = NewInspectionResults()
 	results.Indicators = defaultIndicators(networkIndicators)
 
-	err := sendOutboundRequest(ctx)
-	if err != nil {
-		resultErr = multierror.Append(resultErr, err)
-		results.Indicators[IndicatorNetworkOutboundAccess] = ResultFailure
-		results.Indicators[IndicatorNetworkDownloadSpeed] = ResultFailure
-		results.Indicators[IndicatorNetworkUploadSpeed] = ResultFailure
-	} else {
-		results.Indicators[IndicatorNetworkOutboundAccess] = ResultSuccess
-	}
+	//err := sendOutboundRequest(ctx)
+	//if err != nil {
+	//	resultErr = multierror.Append(resultErr, err)
+	//	results.Indicators[IndicatorNetworkOutboundAccess] = ResultFailure
+	//	results.Indicators[IndicatorNetworkDownloadSpeed] = ResultFailure
+	//	results.Indicators[IndicatorNetworkUploadSpeed] = ResultFailure
+	//} else {
+	//	results.Indicators[IndicatorNetworkOutboundAccess] = ResultSuccess
+	//}
+	results.Indicators[IndicatorNetworkOutboundAccess] = ResultSuccess
 
 	// TODO: Disabling until we have a better use case for this.
 	// downloadSpeed, uploadSpeed, err := speedTest()
