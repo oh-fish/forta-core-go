@@ -131,7 +131,7 @@ func (tf *transactionFeed) ForEachTransaction(blockHandler func(evt *domain.Bloc
 func NewTransactionFeed(ctx context.Context, client ethereum.Client, blockFeed BlockFeed, maxBlockAge *time.Duration, workers int) (*transactionFeed, error) {
 	blocks := make(chan *domain.BlockEvent, 10)
 	txs := make(chan *domain.TransactionEvent, 100)
-	cache := utils.NewCache(1000)
+	cache := utils.NewCache(500)
 	return &transactionFeed{
 		ctx: ctx, cache: cache, client: client, blockFeed: blockFeed, workers: workers, blockCh: blocks, txCh: txs, maxBlockAge: maxBlockAge,
 	}, nil
