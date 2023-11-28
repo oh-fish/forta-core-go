@@ -392,7 +392,7 @@ func NewBlockFeed(ctx context.Context, client ethereum.Client, traceClient ether
 		ctx:              ctx,
 		client:           client,
 		traceClient:      traceClient,
-		cache:            utils.NewCache(10000),
+		cache:            utils.NewCache(1000),
 		chainID:          cfg.ChainID,
 		tracing:          cfg.Tracing,
 		logs:             !cfg.DisableLogs,
