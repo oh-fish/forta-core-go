@@ -570,6 +570,20 @@ func (mr *MockClientMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockClient)(nil).Close))
 }
 
+// DebugTraceCall mocks base method.
+func (m *MockClient) DebugTraceCall(ctx context.Context, req *domain.TraceCallTransaction, block any, traceCallConfig domain.TraceCallConfig, result interface{}) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DebugTraceCall", ctx, req, block, traceCallConfig, result)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DebugTraceCall indicates an expected call of DebugTraceCall.
+func (mr *MockClientMockRecorder) DebugTraceCall(ctx, req, block, traceCallConfig, result interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DebugTraceCall", reflect.TypeOf((*MockClient)(nil).DebugTraceCall), ctx, req, block, traceCallConfig, result)
+}
+
 // GetLogs mocks base method.
 func (m *MockClient) GetLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error) {
 	m.ctrl.T.Helper()
@@ -583,6 +597,21 @@ func (m *MockClient) GetLogs(ctx context.Context, q ethereum.FilterQuery) ([]typ
 func (mr *MockClientMockRecorder) GetLogs(ctx, q interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLogs", reflect.TypeOf((*MockClient)(nil).GetLogs), ctx, q)
+}
+
+// GetTransactionCount mocks base method.
+func (m *MockClient) GetTransactionCount(ctx context.Context, address string, blockNumber any) (*big.Int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTransactionCount", ctx, address, blockNumber)
+	ret0, _ := ret[0].(*big.Int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTransactionCount indicates an expected call of GetTransactionCount.
+func (mr *MockClientMockRecorder) GetTransactionCount(ctx, address, blockNumber interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionCount", reflect.TypeOf((*MockClient)(nil).GetTransactionCount), ctx, address, blockNumber)
 }
 
 // Health mocks base method.

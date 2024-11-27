@@ -62,20 +62,30 @@ type Client interface {
 	BlockNumber(ctx context.Context) (*big.Int, error)
 	TransactionReceipt(ctx context.Context, txHash string) (*domain.TransactionReceipt, error)
 	ChainID(ctx context.Context) (*big.Int, error)
+	GetTransactionCount(ctx context.Context, address string, blockNumber any) (*big.Int, error)
 	TraceBlock(ctx context.Context, number *big.Int) ([]domain.Trace, error)
+	DebugTraceCall(
+		ctx context.Context, req *domain.TraceCallTransaction,
+		block any, traceCallConfig domain.TraceCallConfig,
+		result interface{},
+	) error
 	GetLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error)
 	SubscribeToHead(ctx context.Context) (domain.HeaderCh, error)
 
 	health.Reporter
 }
 
-const blocksByNumber = "eth_getBlockByNumber"
-const blocksByHash = "eth_getBlockByHash"
-const blockNumber = "eth_blockNumber"
-const getLogs = "eth_getLogs"
-const transactionReceipt = "eth_getTransactionReceipt"
-const traceBlock = "trace_block"
-const chainId = "eth_chainId"
+const (
+	blocksByNumber      = "eth_getBlockByNumber"
+	blocksByHash        = "eth_getBlockByHash"
+	blockNumber         = "eth_blockNumber"
+	getLogs             = "eth_getLogs"
+	transactionReceipt  = "eth_getTransactionReceipt"
+	traceBlock          = "trace_block"
+	debugTraceCall      = "debug_traceCall"
+	chainId             = "eth_chainId"
+	getTransactionCount = "eth_getTransactionCount"
+)
 
 const defaultRetryInterval = time.Second * 15
 
@@ -242,6 +252,39 @@ func (e *streamEthClient) TraceBlock(ctx context.Context, number *big.Int) ([]do
 	return result, err
 }
 
+// DebugTraceCall returns the traces of a call.
+func (e *streamEthClient) DebugTraceCall(
+	ctx context.Context, req *domain.TraceCallTransaction,
+	block any, traceCallConfig domain.TraceCallConfig,
+	result interface{},
+) error {
+	name := fmt.Sprintf("%s(%v)", debugTraceCall, req)
+	log.Debugf(name)
+
+	switch block.(type) {
+	case string:
+	case *rpc.BlockNumberOrHash:
+	default:
+		return errors.New("invalid block number type")
+	}
+
+	args := []interface{}{req, block, traceCallConfig}
+
+	err := withBackoff(ctx, name, func(ctx context.Context) error {
+		err := e.rpcClient.CallContext(ctx, &result, debugTraceCall, args...)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}, RetryOptions{
+		MinBackoff:     pointDur(e.retryInterval),
+		MaxElapsedTime: pointDur(1 * time.Minute),
+		MaxBackoff:     pointDur(e.retryInterval),
+	}, nil, nil)
+	return err
+}
+
 // GetLogs returns the set of logs for a block
 func (e *streamEthClient) GetLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error) {
 	name := fmt.Sprintf("%s(%v)", getLogs, q)
@@ -341,6 +384,40 @@ func (e *streamEthClient) TransactionReceipt(ctx context.Context, txHash string)
 		MaxElapsedTime: pointDur(5 * time.Minute),
 	}, &e.lastGetTransactionReceiptReq, &e.lastGetTransactionReceiptErr)
 	return &result, err
+}
+
+// GetTransactionCount returns the transaction count for an address
+func (e *streamEthClient) GetTransactionCount(ctx context.Context, address string, block any) (*big.Int, error) {
+	name := fmt.Sprintf("%s(%s, %s)", getTransactionCount, address, block)
+
+	switch block.(type) {
+	case string:
+	case *rpc.BlockNumberOrHash:
+	default:
+		return nil, errors.New("invalid block number type")
+	}
+
+	log.Debugf(name)
+	var result string
+	err := withBackoff(ctx, name, func(ctx context.Context) error {
+		err := e.rpcClient.CallContext(ctx, &result, getTransactionCount, address, block)
+		if err != nil {
+			return err
+		}
+		if result == "" {
+			return ErrNotFound
+		}
+		return nil
+	}, RetryOptions{
+		MinBackoff:     pointDur(e.retryInterval),
+		MaxElapsedTime: pointDur(12 * time.Hour),
+		MaxBackoff:     pointDur(e.retryInterval),
+	}, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return utils.HexToBigInt(result)
 }
 
 // SubscribeToHead subscribes to the blockchain head and returns a channel which provides
